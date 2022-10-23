@@ -90,7 +90,7 @@ class Scene2 extends Phaser.Scene {
             return;
         }
 
-        const explosion = new Explosion(this, player.y, player.x);
+        let explosion = new Explosion(this, player.y, player.x);
         player.disableBody(true, true);
         //this.resetPlayer();
         this.time.addEvent({
@@ -123,7 +123,7 @@ class Scene2 extends Phaser.Scene {
 
     hitEnemy(projectile, enemy) {
 
-        const explosion = new Explosion(this, enemy.y, enemy.x);
+        let explosion = new Explosion(this, enemy.x, enemy.y);
 
         projectile.destroy();
         this.resetShipPos(enemy);
