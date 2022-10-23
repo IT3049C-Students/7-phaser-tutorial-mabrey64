@@ -26,14 +26,9 @@ class Scene2 extends Phaser.Scene {
 
         this.input.on('gameobjectdown', this.destroyShip, this);
 
-        this.add.text(20, 20, "Playing game", {
-            font: "25px Arial", 
-            fill: "yellow"
-        });
-
         this.powerUps = this.physics.add.group();
 
-        var maxObjects = 4;
+        const maxObjects = 4;
         for (let i = 0; i <= maxObjects; i++) {
             const powerUp = this.physics.add.sprite(16, 16, "power-up");
             this.powerUps.add(powerUp);
@@ -66,21 +61,83 @@ class Scene2 extends Phaser.Scene {
         this.physics.add.overlap(this.player, this.enemies, this.hurtPlayer, null, this);
 
         this.physics.add.overlap(this.projectiles, this.enemies, this.hitEnemy, null, this);
+
+        const graphics = this.add.graphics();
+        graphics.fillStyle(0x000000, 1);
+        graphics.beginPath();
+        graphics.moveTo(0, 0);
+        graphics.lineTo(config.width, 0);
+        graphics.lineTo(config.width, 20);
+        graphics.lineTo(0, 20);
+        graphics.lineTo(0, 0);
+        graphics.closePath();
+        graphics.fillPath();
+
+        this.score = 0;
+        let scoreFormatted = this.zeroPad(this.score, 6);
+        this.scoreLabel = this.add.bitmapText(10, 5, "pixelFont", "SCORE " + scoreFormatted , 16);
     }
 
     pickPowerUp(player, powerUp){
         powerUp.disableBody(true, true);
     }
 
+
     hurtPlayer(player, enemy) {
         this.resetShipPos(enemy);
-        player.x = config.width / 2 - 8;
-        player.y = config.height - 64;
+
+        if(this.player.alpha < 1){
+            return;
+        }
+
+        const explosion = new Explosion(this, player.y, player.x);
+        player.disableBody(true, true);
+        //this.resetPlayer();
+        this.time.addEvent({
+            delay: 1000,
+            callback: this.resetPlayer,
+            callbackScope: this,
+            loop: false
+        });
+    }
+
+    resetPlayer(){
+        const x = config.width / 2 - 8;
+        const y = config.height + 64;
+        this.player.enableBody(true, x, y, true, true);
+
+        this.player.alpha = 0.5;
+
+        let tween = this.tweens.add({
+            targets: this.player,
+            y: config.height - 64,
+            ease: 'Power1',
+            duration: 1500,
+            repeat: 0,
+            onComplete: function(){
+                this.player.alpha = 1;
+            },
+            callbackScope: this
+        });
     }
 
     hitEnemy(projectile, enemy) {
+
+        const explosion = new Explosion(this, enemy.y, enemy.x);
+
         projectile.destroy();
         this.resetShipPos(enemy);
+        this.score += 15;
+        let scoreFormatted = this.zeroPad(this.score, 6);
+        this.scoreLabel.text = "SCORE " + scoreFormatted;
+    }
+
+    zeroPad(number, size){
+        let stringNumber = String(number);
+        while(stringNumber.length < (size || 2)){
+            stringNumber = "0" + stringNumber;
+        }
+        return stringNumber;
     }
 
     update() {
@@ -93,7 +150,9 @@ class Scene2 extends Phaser.Scene {
         this.movePlayerManager();
 
         if (Phaser.Input.Keyboard.JustDown(this.spacebar)){
-            this.shootBeam();
+            if(this.player.active){
+                this.shootBeam();
+            }
         }
         for(let i = 0; i < this.projectiles.getChildren().length; i++){
             const beam = this.projectiles.getChildren()[i];
@@ -131,7 +190,7 @@ class Scene2 extends Phaser.Scene {
 
     resetShipPos(ship){
         ship.y = 0;
-        var randomX = Phaser.Math.Between(0, config.width);
+        let randomX = Phaser.Math.Between(0, config.width);
         ship.x = randomX;
     }
 
