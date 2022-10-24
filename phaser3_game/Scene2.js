@@ -90,7 +90,7 @@ class Scene2 extends Phaser.Scene {
             return;
         }
 
-        let explosion = new Explosion(this, player.y, player.x);
+        let explosion = new Explosion(this, player.x, player.y);
         player.disableBody(true, true);
         //this.resetPlayer();
         this.time.addEvent({
